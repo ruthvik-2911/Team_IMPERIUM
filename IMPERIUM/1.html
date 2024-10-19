@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffikon - Traffic Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #f10808; /* Text color */
+        }
+
+        header {
+            background-color: rgba(181, 181, 194, 0.8); /* Semi-transparent background */
+            color: #7507f1;
+            padding: 10px;
+            text-align: center;
+            position: relative; /* Added for positioning */
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin: 0; /* Remove margin for better alignment */
+        }
+
+        .container {
+            display: flex;
+            max-width: 2000px;
+            margin: 0 auto;
+            flex-grow: 1;
+            height: calc(100% - 80px); /* Full height minus header height */
+        }
+
+        .map-container {
+            flex: 1;
+            height: 100%; /* Ensures the map fills its container */
+            position: relative;
+            overflow: hidden;
+        }
+
+        .info-container {
+            flex: 0 0 400px; /* Fixed width for the info section */
+            background-color: rgba(233, 201, 58, 0.8); /* Semi-transparent background */
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            height: 100%; /* Ensures the info container fills its space */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Space between content */
+        }
+
+        .info-container h2 {
+            margin-bottom: 15px;
+            color: #7414e2;
+        }
+
+        /* Search bar styles */
+        #search {
+            width: 100%;
+            padding: 12px 20px; /* Increased padding */
+            font-size: 1.1rem; /* Increased font size */
+            border-radius: 5px;
+            border: 2px solid #7414e2; /* Border with color */
+            margin-bottom: 10px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow for better visibility */
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 1.1rem;
+            border-radius: 5px;
+            border: 2px solid #7414e2;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .info-container {
+                width: auto; /* Allow full width on smaller screens */
+                border-left: none;
+                border-top: 2px solid #2c3e50;
+                border-radius: 0 0 8px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Traffikon</h1>
+    </header>
+
+    <div class="container">
+        <!-- Map Container -->
+        <div class="map-container" id="map"></div>
+
+        <!-- Info Container -->
+        <div class="info-container">
+            <h2>Traffic Updates</h2>
+            <select id="location-dropdown">
+                <option value="">Select a location...</option>
+                <option value="junction_koramangala">Koramangala</option>
+                <option value="junction_jayanagar">Jayanagar</option>
+                <option value="junction_yeshwanthpur_junction">Yeshwanthpur Junction</option>
+                <option value="junction_jakkur">Jakkur</option>
+                <option value="junction_richmond_circle">Richmond Circle</option>
+                <option value="junction_malleswaram_circle">Malleswaram Circle</option>
+                <option value="junction_uttarahalli">Uttarahalli</option>
+                <option value="junction_shivajinagar_junction">Shivajinagar Junction</option>
+                <option value="junction_tin_factory_junction">Tin Factory Junction</option>
+                <option value="junction__basavanagudi">Basavanagudi</option>
+                <option value="junction__vijayanagara_junction">Vijayanagara Junction</option>
+                <option value="Outer Ring Road (ORR) Junctions">Outer Ring Road (ORR) Junctions</option>
+                <option value="junction_bannerghatta _road_junction_(jayadeva_hospital)">Bannerghatta Road Junction (Jayadeva Hospital)</option>
+                <option value="junction_electronic_city_junction">Electronic City Junction</option>
+                <option value="Old Airport Road (Domlur Junction)">Old Airport Road (Domlur Junction)</option>
+                <option value="Kanakapura Road">Kanakapura Road</option>
+                <option value="Hennur Junction">Hennur Junction</option>
+                <option value="Banashankari Junction">Banashankari Junction</option>
+                <option value="Madiwala Junction">Madiwala Junction</option>
+                <option value="Kengeri">Kengeri</option>
+                <option value="Basaveshwaranagar Junction">Basaveshwaranagar Junction</option>
+                <option value="Majestic (Kempegowda) Junction">Majestic (Kempegowda) Junction</option>
+                <option value="Mekhri Circle">Mekhri Circle</option>
+                <option value="Indiranagar 100 Feet Road Junction">Indiranagar 100 Feet Road Junction</option>
+                <option value="Hosur Road Junction">Hosur Road Junction</option>
+                <option value="RT Nagar Junction">RT Nagar Junction</option>
+                <option value="Nagawara Junction">Nagawara Junction</option>
+                <option value="Vivek Nagar">Vivek Nagar</option>
+                <option value="Frazer Town">Frazer Town</option>
+            </select>
+            <button id="submit-btn">Get Cycle Time</button>
+            <div id="output" style="margin-top: 15px; color: #7507f1;"></div>
+        </div>
+    </div>
+
+    <!-- Load Google Maps JavaScript API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFKavOmPc4Q2cgHcGx3MBpfdKh319rzt8&libraries=places"></script>
+    <script>
+        const mapContainer = document.getElementById('map');
+        const locationDropdown = document.getElementById('location-dropdown');
+        const outputDiv = document.getElementById('output');
+
+        // Initialize map
+        const map = new google.maps.Map(mapContainer, {
+            center: { lat: 12.9716, lng: 77.5946 }, // Bangalore center
+            zoom: 12,
+        });
+
+        // Handle location change
+        locationDropdown.addEventListener('change', function () {
+            const selectedValue = this.value;
+            if (selectedValue) {
+                const locationMap = {
+                    "Koramangala": { lat: 12.9338, lng: 77.6190 },
+                    "Jayanagar": { lat: 12.9348, lng: 77.5900 },
+                    "Yeshwanthpur Junction": { lat: 13.0286, lng: 77.5385 },
+                    "Jakkur": { lat: 13.0800, lng: 77.6112 },
+                    "Richmond Circle": { lat: 12.9668, lng: 77.5950 },
+                    "Malleswaram Circle": { lat: 12.9974, lng: 77.5704 },
+                    "Uttarahalli": { lat: 12.9137, lng: 77.5271 },
+                    "Shivajinagar Junction": { lat: 12.9822, lng: 77.6051 },
+                    "Tin Factory Junction": { lat: 12.9937, lng: 77.6607 },
+                    "Basavanagudi": { lat: 12.9422, lng: 77.5736 },
+                    "Vijayanagara Junction": { lat: 12.9710, lng: 77.5396 },
+                    "Outer Ring Road (ORR) Junctions": { lat: 12.9360, lng: 77.6983 },
+                    "Bannerghatta Road Junction (Jayadeva Hospital)": { lat: 12.9072, lng: 77.6012 },
+                    "Electronic City Junction": { lat: 12.8390, lng: 77.6784 },
+                    "Old Airport Road (Domlur Junction)": { lat: 12.9353, lng: 77.6487 },
+                    "Kanakapura Road": { lat: 12.8942, lng: 77.5853 },
+                    "Hennur Junction": { lat: 13.0242, lng: 77.6535 },
+                    "Banashankari Junction": { lat: 12.9192, lng: 77.5785 },
+                    "Madiwala Junction": { lat: 12.9340, lng: 77.6232 },
+                    "Kengeri": { lat: 12.9048, lng: 77.4843 },
+                    "Basaveshwaranagar Junction": { lat: 12.9864, lng: 77.5535 },
+                    "Majestic (Kempegowda) Junction": { lat: 12.9731, lng: 77.5775 },
+                    "Mekhri Circle": { lat: 13.0081, lng: 77.6045 },
+                    "Indiranagar 100 Feet Road Junction": { lat: 12.9641, lng: 77.6350 },
+                    "Hosur Road Junction": { lat: 12.9174, lng: 77.6492 },
+                    "RT Nagar Junction": { lat: 13.0228, lng: 77.6059 },
+                    "Nagawara Junction": { lat: 13.0326, lng: 77.6132 },
+                    "Vivek Nagar": { lat: 12.9625, lng: 77.6056 },
+                    "Frazer Town": { lat: 12.9895, lng: 77.6148 }
+                };
+
+                const locationCoords = locationMap[selectedValue];
+                map.setCenter(locationCoords);
+                const marker = new google.maps.Marker({
+                    position: locationCoords,
+                    map: map,
+                });
+                
+                // Fetch and display the traffic cycle time from SQLite database (assuming an API exists)
+                fetch(`/api/cycle-time?location=${selectedValue}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        outputDiv.innerHTML = `Cycle Time at ${selectedValue}: ${data.cycleTime} seconds`;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching cycle time:', error);
+                        outputDiv.innerHTML = 'Error fetching cycle time.';
+                    });
+            } else {
+                outputDiv.innerHTML = ''; // Clear output if no location is selected
+            }
+        });
+    </script>
+</body>
+</html>
